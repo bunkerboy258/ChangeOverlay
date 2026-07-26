@@ -17,7 +17,6 @@
                 displayType="BALLOON"
                 isLogByDefault="true"/>
         <applicationConfigurable
-                parentId="tools"
                 id="com.bbbwork.changeoverlay.settings"
                 displayName="Change Overlay"
                 instance="com.bbbwork.changeoverlay.settings.ChangeOverlayConfigurable"/>

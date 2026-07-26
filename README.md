@@ -70,7 +70,7 @@ Session Snapshot stores the contents of currently open text files in memory. It 
 
 ## Settings
 
-Open `Settings | Tools | Change Overlay` to configure enablement, baseline mode, tracked branch commit history, visible change types, added and deleted colors, opacity, debounce duration, maximum file size, maximum line count, and the deleted-line minus prefix. The tracked branch list contains local branches from the first open Git project and is loaded outside the EDT.
+Open `Settings | Change Overlay` from the top level of the settings sidebar to configure enablement, baseline mode, tracked branch commit history, visible change types, added and deleted colors, opacity, debounce duration, maximum file size, maximum line count, and the deleted-line minus prefix. The tracked branch list contains local branches from the first open Git project and is loaded outside the EDT.
 
 ## Performance and Limits
 
