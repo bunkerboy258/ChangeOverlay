@@ -12,6 +12,10 @@
     <extensions defaultExtensionNs="com.intellij">
         <projectService serviceImplementation="com.bbbwork.changeoverlay.services.ChangeOverlayProjectService"/>
         <postStartupActivity implementation="com.bbbwork.changeoverlay.services.ChangeOverlayStartupActivity"/>
+        <notificationGroup
+                id="Change Overlay"
+                displayType="BALLOON"
+                isLogByDefault="true"/>
         <applicationConfigurable
                 parentId="tools"
                 id="com.bbbwork.changeoverlay.settings"

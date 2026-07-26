@@ -15,6 +15,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -31,6 +33,7 @@ class EditorOverlayController(
     private val overlayState = EditorOverlayState()
     private val version = AtomicLong()
     private var scheduledTask: Future<*>? = null
+    private var lastReportedFailure: String? = null
 
     init
     {
@@ -129,6 +132,7 @@ class EditorOverlayController(
             if (baseline is BaselineResult.Failure)
             {
                 logger.warn(baseline.message)
+                reportFailure(baseline.message)
             }
 
             clearIfCurrent(taskVersion)
@@ -136,6 +140,7 @@ class EditorOverlayController(
             return
         }
 
+        lastReportedFailure = null
         val currentText = editor.document.text
         val result = diffEngine.diff(
             baseline.text,
@@ -155,6 +160,33 @@ class EditorOverlayController(
             }
 
             render(mapping)
+        }
+    }
+
+    //显示去重基线错误提示
+    private fun reportFailure(message: String)
+    {
+        if (lastReportedFailure == message)
+        {
+            return
+        }
+
+        lastReportedFailure = message
+
+        ApplicationManager.getApplication().invokeLater {
+            if (editor.isDisposed)
+            {
+                return@invokeLater
+            }
+
+            NotificationGroupManager
+                .getInstance()
+                .getNotificationGroup("Change Overlay")
+                .createNotification(
+                    message,
+                    NotificationType.WARNING
+                )
+                .notify(editor.project)
         }
     }
 
