@@ -1,0 +1,45 @@
+<idea-plugin>
+    <id>com.bbbwork.changeoverlay</id>
+    <name>Change Overlay</name>
+    <vendor>BBBWork</vendor>
+
+    <description><![CDATA[
+        Displays Git HEAD or session snapshot changes directly in ordinary Rider editors.
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceImplementation="com.bbbwork.changeoverlay.services.ChangeOverlayProjectService"/>
+        <postStartupActivity implementation="com.bbbwork.changeoverlay.services.ChangeOverlayStartupActivity"/>
+        <applicationConfigurable
+                parentId="tools"
+                id="com.bbbwork.changeoverlay.settings"
+                displayName="Change Overlay"
+                instance="com.bbbwork.changeoverlay.settings.ChangeOverlayConfigurable"/>
+    </extensions>
+
+    <actions>
+        <group id="com.bbbwork.changeoverlay.actions.ChangeOverlayGroup"
+               text="Change Overlay"
+               popup="true">
+            <action id="com.bbbwork.changeoverlay.actions.Toggle"
+                    class="com.bbbwork.changeoverlay.actions.ToggleChangeOverlayAction"
+                    text="Toggle Change Overlay"/>
+            <action id="com.bbbwork.changeoverlay.actions.Capture"
+                    class="com.bbbwork.changeoverlay.actions.CaptureCurrentStateAction"
+                    text="Capture Current State as Baseline"/>
+            <action id="com.bbbwork.changeoverlay.actions.UseGitHead"
+                    class="com.bbbwork.changeoverlay.actions.UseGitHeadBaselineAction"
+                    text="Use Git HEAD as Baseline"/>
+            <action id="com.bbbwork.changeoverlay.actions.Refresh"
+                    class="com.bbbwork.changeoverlay.actions.RefreshChangeOverlayAction"
+                    text="Refresh Change Overlay"/>
+            <action id="com.bbbwork.changeoverlay.actions.Clear"
+                    class="com.bbbwork.changeoverlay.actions.ClearChangeOverlayAction"
+                    text="Clear Change Overlay"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </group>
+    </actions>
+</idea-plugin>
