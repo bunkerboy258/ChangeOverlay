@@ -4,7 +4,7 @@
     <vendor>BBBWork</vendor>
 
     <description><![CDATA[
-        在 Rider 普通代码编辑器中直接显示 Git HEAD 分支提交历史或会话快照差异
+        Change Overlay displays file changes directly in Rider editors / 在 Rider 普通代码编辑器中直接显示 Git HEAD 分支提交历史或会话快照差异
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
