@@ -76,7 +76,7 @@ Open `Settings | Change Overlay` from the top level of the settings sidebar to c
 
 Binary files, files larger than 1 MiB, files over 20000 lines, and editors without a valid text document are skipped by default. Git and diff work run outside the EDT. Document changes use a default 300 ms debounce and a monotonically increasing task version so stale results cannot replace newer results.
 
-Deleted blocks use the editor font and expand tabs to four spaces. Very long deleted lines are clipped by the visible editor area rather than wrapped. The first version does not syntax-highlight deleted content.
+Deleted blocks use the editor font and expand tabs to four spaces. Characters unsupported by the configured editor font use JBR logical font fallback so Chinese and Unicode text remain visible. Very long deleted lines are clipped by the visible editor area rather than wrapped. The first version does not syntax-highlight deleted content.
 
 ## IntelliJ Platform APIs
 

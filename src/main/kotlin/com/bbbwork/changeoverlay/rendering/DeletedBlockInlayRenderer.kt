@@ -15,6 +15,8 @@ class DeletedBlockInlayRenderer(
     private val showMinusPrefix: Boolean
 ) : EditorCustomElementRenderer
 {
+    private val textRenderer = FontFallbackTextRenderer()
+
     //计算删除块宽度
     override fun calcWidthInPixels(inlay: Inlay<*>): Int
     {
@@ -45,8 +47,7 @@ class DeletedBlockInlayRenderer(
             targetRegion.height
         )
         graphics.color = editor.colorsScheme.defaultForeground
-        graphics.font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
-        val fontMetrics = graphics.fontMetrics
+        val editorFont = editor.colorsScheme.getFont(EditorFontType.PLAIN)
 
         for ((index, line) in lines.withIndex())
         {
@@ -56,8 +57,10 @@ class DeletedBlockInlayRenderer(
                 index * editor.lineHeight +
                 editor.ascent
 
-            graphics.drawString(
+            textRenderer.draw(
+                graphics,
                 prefix + expandedLine,
+                editorFont,
                 targetRegion.x,
                 baseline
             )
