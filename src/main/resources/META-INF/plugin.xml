@@ -4,7 +4,7 @@
     <vendor>BBBWork</vendor>
 
     <description><![CDATA[
-        Displays Git HEAD, tracked branch history, or session snapshot changes directly in ordinary Rider editors.
+        在 Rider 普通代码编辑器中直接显示 Git HEAD 分支提交历史或会话快照差异
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -18,29 +18,29 @@
                 isLogByDefault="true"/>
         <applicationConfigurable
                 id="com.bbbwork.changeoverlay.settings"
-                displayName="Change Overlay"
+                displayName="更改覆盖 / Change Overlay"
                 instance="com.bbbwork.changeoverlay.settings.ChangeOverlayConfigurable"/>
     </extensions>
 
     <actions>
         <group id="com.bbbwork.changeoverlay.actions.ChangeOverlayGroup"
-               text="Change Overlay"
+               text="更改覆盖 / Change Overlay"
                popup="true">
             <action id="com.bbbwork.changeoverlay.actions.Toggle"
                     class="com.bbbwork.changeoverlay.actions.ToggleChangeOverlayAction"
-                    text="Toggle Change Overlay"/>
+                    text="启用或关闭更改覆盖 / Toggle Change Overlay"/>
             <action id="com.bbbwork.changeoverlay.actions.Capture"
                     class="com.bbbwork.changeoverlay.actions.CaptureCurrentStateAction"
-                    text="Capture Current State as Baseline"/>
+                    text="将当前状态设为基线 / Capture Current State as Baseline"/>
             <action id="com.bbbwork.changeoverlay.actions.UseGitHead"
                     class="com.bbbwork.changeoverlay.actions.UseGitHeadBaselineAction"
-                    text="Use Git HEAD as Baseline"/>
+                    text="使用 Git HEAD 作为基线 / Use Git HEAD as Baseline"/>
             <action id="com.bbbwork.changeoverlay.actions.Refresh"
                     class="com.bbbwork.changeoverlay.actions.RefreshChangeOverlayAction"
-                    text="Refresh Change Overlay"/>
+                    text="刷新更改覆盖 / Refresh Change Overlay"/>
             <action id="com.bbbwork.changeoverlay.actions.Clear"
                     class="com.bbbwork.changeoverlay.actions.ClearChangeOverlayAction"
-                    text="Clear Change Overlay"/>
+                    text="清除更改覆盖 / Clear Change Overlay"/>
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>

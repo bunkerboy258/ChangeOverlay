@@ -22,26 +22,26 @@ import javax.swing.JPanel
 //插件设置页面
 class ChangeOverlayConfigurable : Configurable
 {
-    private val enabled = JBCheckBox("Enable Change Overlay")
+    private val enabled = JBCheckBox("启用更改覆盖 / Enable Change Overlay")
     private val baselineMode = JComboBox(BaselineMode.entries.toTypedArray())
-    private val trackBranchCommitHistory = JBCheckBox("Track Branch Commit History")
+    private val trackBranchCommitHistory = JBCheckBox("跟踪分支提交历史 / Track Branch Commit History")
     private val trackedBranch = JComboBox<String>()
-    private val showAddedLines = JBCheckBox("Show Added Lines")
-    private val showDeletedLines = JBCheckBox("Show Deleted Lines")
-    private val showModifiedLines = JBCheckBox("Show Modified Lines")
+    private val showAddedLines = JBCheckBox("显示新增行 / Show Added Lines")
+    private val showDeletedLines = JBCheckBox("显示删除行 / Show Deleted Lines")
+    private val showModifiedLines = JBCheckBox("显示修改行 / Show Modified Lines")
     private val addedColor = ColorPanel()
     private val deletedColor = ColorPanel()
     private val opacity = JBTextField()
     private val debounce = JBTextField()
     private val maximumFileSize = JBTextField()
     private val maximumLineCount = JBTextField()
-    private val showMinusPrefix = JBCheckBox("Show Minus Prefix for Deleted Lines")
+    private val showMinusPrefix = JBCheckBox("删除行显示减号前缀 / Show Minus Prefix")
     private var panel: JPanel? = null
 
     //返回设置页面名称
     override fun getDisplayName(): String
     {
-        return "Change Overlay"
+        return "更改覆盖 / Change Overlay"
     }
 
     //创建设置页面组件
@@ -51,18 +51,18 @@ class ChangeOverlayConfigurable : Configurable
         var row = 0
 
         addRow(result, enabled, row++)
-        addRow(result, JBLabel("Baseline Mode"), baselineMode, row++)
+        addRow(result, JBLabel("基线模式 / Baseline Mode"), baselineMode, row++)
         addRow(result, trackBranchCommitHistory, row++)
-        addRow(result, JBLabel("Tracked Branch"), trackedBranch, row++)
+        addRow(result, JBLabel("跟踪分支 / Tracked Branch"), trackedBranch, row++)
         addRow(result, showAddedLines, row++)
         addRow(result, showDeletedLines, row++)
         addRow(result, showModifiedLines, row++)
-        addRow(result, JBLabel("Added Background Color"), addedColor, row++)
-        addRow(result, JBLabel("Deleted Background Color"), deletedColor, row++)
-        addRow(result, JBLabel("Background Opacity 0 to 100"), opacity, row++)
-        addRow(result, JBLabel("Debounce Milliseconds"), debounce, row++)
-        addRow(result, JBLabel("Maximum File Size Bytes"), maximumFileSize, row++)
-        addRow(result, JBLabel("Maximum Line Count"), maximumLineCount, row++)
+        addRow(result, JBLabel("新增背景色 / Added Color"), addedColor, row++)
+        addRow(result, JBLabel("删除背景色 / Deleted Color"), deletedColor, row++)
+        addRow(result, JBLabel("背景透明度 0 到 100 / Opacity"), opacity, row++)
+        addRow(result, JBLabel("刷新防抖毫秒 / Debounce Milliseconds"), debounce, row++)
+        addRow(result, JBLabel("最大文件字节数 / Maximum File Size"), maximumFileSize, row++)
+        addRow(result, JBLabel("最大行数 / Maximum Line Count"), maximumLineCount, row++)
         addRow(result, showMinusPrefix, row++)
 
         val filler = GridBagConstraints()
