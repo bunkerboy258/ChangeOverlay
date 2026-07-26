@@ -4,7 +4,7 @@
     <vendor>BBBWork</vendor>
 
     <description><![CDATA[
-        Displays Git HEAD or session snapshot changes directly in ordinary Rider editors.
+        Displays Git HEAD, tracked branch history, or session snapshot changes directly in ordinary Rider editors.
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>

@@ -1,61 +1,93 @@
 package com.bbbwork.changeoverlay.baseline
 
+import com.bbbwork.changeoverlay.settings.ChangeOverlaySettings
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.AppExecutorUtil
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 //GitHead基线提供器
 class GitHeadBaselineProvider(
-    private val project: Project
+    private val project: Project,
+    private val repositoryStateReader: GitRepositoryStateReader = GitRepositoryStateReader()
 ) : BaselineProvider
 {
-    companion object
-    {
-        //Git命令最大等待秒数
-        private const val COMMAND_TIMEOUT_SECONDS = 5L
-    }
-
     private val logger = Logger.getInstance(GitHeadBaselineProvider::class.java)
 
-    //读取GitHead基线
+    //读取Git基线
     override fun readBaseline(file: VirtualFile): BaselineResult
     {
         val basePath = project.basePath
             ?: return BaselineResult.Failure("Project has no base directory")
-        val relativePath = relativeGitPath(basePath, file)
+        relativeGitPath(basePath, file)
             ?: return BaselineResult.Skipped("File is outside the project")
-        val repositoryRoot = findRepositoryRoot(file)
-            ?: return BaselineResult.Failure("Project is not inside a Git repository")
-        val repositoryRelativePath = relativeGitPath(repositoryRoot.path, file)
-            ?: return BaselineResult.Skipped("File is outside the Git repository")
 
-        return runGitShow(repositoryRoot.path, repositoryRelativePath)
+        val repositoryRoot = repositoryStateReader.findRepositoryRoot(file.path)
+            ?: return BaselineResult.Failure("Project is not inside a Git repository")
+        val repositoryRelativePath = relativeGitPath(repositoryRoot, file)
+            ?: return BaselineResult.Skipped("File is outside the Git repository")
+        val repositoryState = repositoryStateReader.readState(repositoryRoot)
+            ?: return BaselineResult.Failure("Unable to read Git repository state")
+        val settings = ChangeOverlaySettings.getInstance().state
+        val revision = GitBaselineRevisionSelector.select(
+            settings.trackBranchCommitHistory,
+            settings.trackedBranchName,
+            repositoryState
+        )
+        val request = GitBaselineRequest(
+            repositoryRoot,
+            repositoryRelativePath,
+            revision
+        )
+
+        return mapCommandResult(
+            request,
+            repositoryStateReader.readFile(request)
+        )
     }
 
-    //查找最近Git仓库根目录
-    private fun findRepositoryRoot(file: VirtualFile): VirtualFile?
+    //转换Git命令结果
+    private fun mapCommandResult(
+        request: GitBaselineRequest,
+        result: GitRepositoryStateReader.CommandResult
+    ): BaselineResult
     {
-        var current = file.parent
-
-        while (current != null)
+        if (result is GitRepositoryStateReader.CommandResult.Success)
         {
-            if (current.findChild(".git") != null)
-            {
-                return current
-            }
-
-            current = current.parent
+            return BaselineResult.Success(result.output)
         }
 
-        return null
+        if (result is GitRepositoryStateReader.CommandResult.Unavailable)
+        {
+            return BaselineResult.Failure("Git is unavailable")
+        }
+
+        if (result is GitRepositoryStateReader.CommandResult.TimedOut)
+        {
+            logger.warn("Git baseline timed out for ${request.relativePath}")
+
+            return BaselineResult.Failure("Git baseline command timed out")
+        }
+
+        if (result is GitRepositoryStateReader.CommandResult.Failure)
+        {
+            if (isMissingRevisionPath(result.output))
+            {
+                return BaselineResult.Success("")
+            }
+
+            logger.warn(
+                "Git baseline failed for ${request.revision} ${request.relativePath} ${result.output.trim()}"
+            )
+        }
+
+        return BaselineResult.Failure("Unable to read Git baseline")
     }
 
     //转换Git相对路径
-    private fun relativeGitPath(rootPath: String, file: VirtualFile): String?
+    private fun relativeGitPath(
+        rootPath: String,
+        file: VirtualFile
+    ): String?
     {
         val root = java.nio.file.Path.of(rootPath).toAbsolutePath().normalize()
         val target = java.nio.file.Path.of(file.path).toAbsolutePath().normalize()
@@ -68,70 +100,8 @@ class GitHeadBaselineProvider(
         return root.relativize(target).joinToString("/")
     }
 
-    //执行GitShow关键调用
-    private fun runGitShow(repositoryRoot: String, relativePath: String): BaselineResult
-    {
-        val process = try
-        {
-            ProcessBuilder(
-                "git",
-                "-C",
-                repositoryRoot,
-                "show",
-                "HEAD:$relativePath"
-            )
-                .redirectErrorStream(true)
-                .start()
-        }
-        catch (exception: Exception)
-        {
-            logger.warn("Unable to start Git for $relativePath", exception)
-
-            return BaselineResult.Failure("Git is unavailable")
-        }
-
-        //并行消费Git输出避免进程管道阻塞
-        val outputFuture = CompletableFuture.supplyAsync(
-            {
-                process.inputStream.readBytes()
-            },
-            AppExecutorUtil.getAppExecutorService()
-        )
-        val completed = process.waitFor(
-            COMMAND_TIMEOUT_SECONDS,
-            TimeUnit.SECONDS
-        )
-
-        if (!completed)
-        {
-            process.destroyForcibly()
-            outputFuture.cancel(true)
-            logger.warn("Git baseline timed out for $relativePath")
-
-            return BaselineResult.Failure("Git baseline command timed out")
-        }
-
-        val output = outputFuture
-            .get(1, TimeUnit.SECONDS)
-            .toString(StandardCharsets.UTF_8)
-
-        if (process.exitValue() == 0)
-        {
-            return BaselineResult.Success(output)
-        }
-
-        if (isMissingHeadPath(output))
-        {
-            return BaselineResult.Success("")
-        }
-
-        logger.warn("Git baseline failed for $relativePath ${output.trim()}")
-
-        return BaselineResult.Failure("Unable to read Git HEAD baseline")
-    }
-
-    //判断Head中文件缺失
-    private fun isMissingHeadPath(error: String): Boolean
+    //判断Git版本中文件缺失
+    private fun isMissingRevisionPath(error: String): Boolean
     {
         if (error.contains("exists on disk, but not in", ignoreCase = true))
         {
@@ -143,7 +113,8 @@ class GitHeadBaselineProvider(
             return true
         }
 
-        if (error.contains("invalid object name", ignoreCase = true))
+        if (error.contains("path", ignoreCase = true) &&
+            error.contains("not exist", ignoreCase = true))
         {
             return true
         }

@@ -64,11 +64,13 @@ No default shortcuts are assigned.
 
 Git HEAD is the default. The plugin runs `git show HEAD:<relative-path>` in a background executor with a five-second timeout. A file absent from HEAD uses an empty baseline. Missing Git, missing repositories, and command errors are logged without uncaught UI exceptions.
 
+Enable `Track Branch Commit History` and select a local branch to keep the most recent local commit visible after committing. When the selected branch is currently checked out and the entire working tree is clean, the plugin automatically uses `HEAD^` as the baseline. A dirty working tree, another checked-out branch, a missing selection, or an initial commit without a parent automatically uses `HEAD`.
+
 Session Snapshot stores the contents of currently open text files in memory. It never modifies files or creates Git commits. Snapshots are discarded when the project service is disposed.
 
 ## Settings
 
-Open `Settings | Tools | Change Overlay` to configure enablement, baseline mode, visible change types, added and deleted colors, opacity, debounce duration, maximum file size, maximum line count, and the deleted-line minus prefix.
+Open `Settings | Tools | Change Overlay` to configure enablement, baseline mode, tracked branch commit history, visible change types, added and deleted colors, opacity, debounce duration, maximum file size, maximum line count, and the deleted-line minus prefix. The tracked branch list contains local branches from the first open Git project and is loaded outside the EDT.
 
 ## Performance and Limits
 
@@ -85,6 +87,7 @@ No API intentionally marked `@ApiStatus.Internal` or `@Experimental` is used. Pl
 ## Known Limitations
 
 - A project must already have a Git commit for Git HEAD mode to display tracked baselines.
+- Branch history tracking applies only when the selected local branch is currently checked out.
 - Session snapshots include only files open when capture is invoked.
 - Deleted block text has no syntax highlighting.
 - Deleted long lines do not wrap.

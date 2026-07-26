@@ -1,16 +1,20 @@
 package com.bbbwork.changeoverlay.settings
 
 import com.bbbwork.changeoverlay.baseline.BaselineMode
+import com.bbbwork.changeoverlay.baseline.GitRepositoryStateReader
+import com.bbbwork.changeoverlay.services.ChangeOverlayProjectService
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
-import com.bbbwork.changeoverlay.services.ChangeOverlayProjectService
 import com.intellij.ui.ColorPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
+import com.intellij.util.concurrency.AppExecutorUtil
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.Insets
+import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -20,6 +24,8 @@ class ChangeOverlayConfigurable : Configurable
 {
     private val enabled = JBCheckBox("Enable Change Overlay")
     private val baselineMode = JComboBox(BaselineMode.entries.toTypedArray())
+    private val trackBranchCommitHistory = JBCheckBox("Track Branch Commit History")
+    private val trackedBranch = JComboBox<String>()
     private val showAddedLines = JBCheckBox("Show Added Lines")
     private val showDeletedLines = JBCheckBox("Show Deleted Lines")
     private val showModifiedLines = JBCheckBox("Show Modified Lines")
@@ -46,6 +52,8 @@ class ChangeOverlayConfigurable : Configurable
 
         addRow(result, enabled, row++)
         addRow(result, JBLabel("Baseline Mode"), baselineMode, row++)
+        addRow(result, trackBranchCommitHistory, row++)
+        addRow(result, JBLabel("Tracked Branch"), trackedBranch, row++)
         addRow(result, showAddedLines, row++)
         addRow(result, showDeletedLines, row++)
         addRow(result, showModifiedLines, row++)
@@ -64,7 +72,14 @@ class ChangeOverlayConfigurable : Configurable
         filler.fill = GridBagConstraints.VERTICAL
         result.add(JPanel(), filler)
         panel = result
+        trackBranchCommitHistory.addActionListener {
+            updateTrackedBranchEnabled()
+        }
+        baselineMode.addActionListener {
+            updateTrackedBranchEnabled()
+        }
         reset()
+        loadLocalBranches()
 
         return result
     }
@@ -76,6 +91,8 @@ class ChangeOverlayConfigurable : Configurable
 
         return enabled.isSelected != state.enabled ||
             baselineMode.selectedItem != state.baselineMode ||
+            trackBranchCommitHistory.isSelected != state.trackBranchCommitHistory ||
+            selectedTrackedBranch() != state.trackedBranchName ||
             showAddedLines.isSelected != state.showAddedLines ||
             showDeletedLines.isSelected != state.showDeletedLines ||
             showModifiedLines.isSelected != state.showModifiedLines ||
@@ -94,6 +111,8 @@ class ChangeOverlayConfigurable : Configurable
         val state = ChangeOverlaySettings.getInstance().state
         state.enabled = enabled.isSelected
         state.baselineMode = baselineMode.selectedItem as BaselineMode
+        state.trackBranchCommitHistory = trackBranchCommitHistory.isSelected
+        state.trackedBranchName = selectedTrackedBranch()
         state.showAddedLines = showAddedLines.isSelected
         state.showDeletedLines = showDeletedLines.isSelected
         state.showModifiedLines = showModifiedLines.isSelected
@@ -120,6 +139,9 @@ class ChangeOverlayConfigurable : Configurable
         val state = ChangeOverlaySettings.getInstance().state
         enabled.isSelected = state.enabled
         baselineMode.selectedItem = state.baselineMode
+        trackBranchCommitHistory.isSelected = state.trackBranchCommitHistory
+        selectTrackedBranch(state.trackedBranchName)
+        updateTrackedBranchEnabled()
         showAddedLines.isSelected = state.showAddedLines
         showDeletedLines.isSelected = state.showDeletedLines
         showModifiedLines.isSelected = state.showModifiedLines
@@ -130,6 +152,122 @@ class ChangeOverlayConfigurable : Configurable
         maximumFileSize.text = state.maximumFileSizeBytes.toString()
         maximumLineCount.text = state.maximumLineCount.toString()
         showMinusPrefix.isSelected = state.showMinusPrefix
+    }
+
+    //后台加载当前项目本地分支
+    private fun loadLocalBranches()
+    {
+        val projectPaths = ProjectManager
+            .getInstance()
+            .openProjects
+            .mapNotNull {
+                it.basePath
+            }
+
+        AppExecutorUtil
+            .getAppExecutorService()
+            .submit {
+                val reader = GitRepositoryStateReader()
+                var repositoryRoot: String? = null
+
+                for (projectPath in projectPaths)
+                {
+                    repositoryRoot = reader.findRepositoryRoot(projectPath)
+
+                    if (repositoryRoot != null)
+                    {
+                        break
+                    }
+                }
+
+                if (repositoryRoot == null)
+                {
+                    return@submit
+                }
+
+                val branches = reader.readLocalBranches(repositoryRoot)
+                val currentBranch = reader.readState(repositoryRoot)?.currentBranch.orEmpty()
+
+                ApplicationManager.getApplication().invokeLater {
+                    if (panel == null)
+                    {
+                        return@invokeLater
+                    }
+
+                    applyLocalBranches(
+                        branches,
+                        currentBranch
+                    )
+                }
+            }
+    }
+
+    //应用本地分支列表
+    private fun applyLocalBranches(
+        branches: List<String>,
+        currentBranch: String
+    )
+    {
+        val storedBranch = ChangeOverlaySettings.getInstance().state.trackedBranchName
+        val items = branches.toMutableList()
+
+        if (storedBranch.isNotBlank() && !items.contains(storedBranch))
+        {
+            items.add(0, storedBranch)
+        }
+
+        trackedBranch.model = DefaultComboBoxModel(items.toTypedArray())
+
+        if (storedBranch.isNotBlank())
+        {
+            trackedBranch.selectedItem = storedBranch
+
+            return
+        }
+
+        if (currentBranch.isNotBlank())
+        {
+            trackedBranch.selectedItem = currentBranch
+        }
+    }
+
+    //选择已持久化跟踪分支
+    private fun selectTrackedBranch(branchName: String)
+    {
+        if (branchName.isBlank())
+        {
+            return
+        }
+
+        val model = trackedBranch.model
+
+        for (index in 0 until model.size)
+        {
+            if (model.getElementAt(index) == branchName)
+            {
+                trackedBranch.selectedItem = branchName
+
+                return
+            }
+        }
+
+        trackedBranch.addItem(branchName)
+        trackedBranch.selectedItem = branchName
+    }
+
+    //同步分支选择启用状态
+    private fun updateTrackedBranchEnabled()
+    {
+        val gitHeadSelected = baselineMode.selectedItem == BaselineMode.GIT_HEAD
+        trackBranchCommitHistory.isEnabled = gitHeadSelected
+        trackedBranch.isEnabled = gitHeadSelected &&
+            trackBranchCommitHistory.isSelected
+    }
+
+    //读取标准化跟踪分支名称
+    private fun selectedTrackedBranch(): String
+    {
+        return trackedBranch.selectedItem as? String ?: ""
     }
 
     //释放设置页面

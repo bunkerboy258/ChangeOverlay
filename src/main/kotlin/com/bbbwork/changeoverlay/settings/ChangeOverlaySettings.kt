@@ -19,6 +19,8 @@ class ChangeOverlaySettings : PersistentStateComponent<ChangeOverlaySettings.Sta
     data class State(
         var enabled: Boolean = true,
         var baselineMode: BaselineMode = BaselineMode.GIT_HEAD,
+        var trackBranchCommitHistory: Boolean = false,
+        var trackedBranchName: String = "",
         var showAddedLines: Boolean = true,
         var showDeletedLines: Boolean = true,
         var showModifiedLines: Boolean = true,
