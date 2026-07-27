@@ -130,13 +130,14 @@ class ChangeOverlayConfigurable : Configurable
         state.maximumLineCount = maximumLineCount.text.toIntOrNull()?.coerceAtLeast(1) ?: 20_000
         state.showMinusPrefix = showMinusPrefix.isSelected
 
-        //快捷键文本非空但解析失败时保留旧值
+        //快捷键文本非空但解析失败时保留旧值 快捷键写入Keymap后由Rider持久化
         val shortcutText = toggleShortcut.text.trim()
 
         if (shortcutText.isEmpty() || ToggleShortcutParser.parse(shortcutText) != null)
         {
+            val previousShortcut = state.toggleShortcutKeystroke
             state.toggleShortcutKeystroke = shortcutText
-            ToggleShortcutManager.apply(shortcutText)
+            ToggleShortcutManager.apply(previousShortcut, shortcutText)
         }
 
         //刷新全部打开项目应用设置
