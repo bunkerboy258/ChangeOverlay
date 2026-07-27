@@ -38,7 +38,7 @@ class ChangeOverlayConfigurable : Configurable
     private val maximumFileSize = JBTextField()
     private val maximumLineCount = JBTextField()
     private val showMinusPrefix = JBCheckBox("删除行显示减号前缀 / Show Minus Prefix")
-    private val toggleShortcut = JBTextField()
+    private val toggleShortcut = ShortcutCaptureField()
     private var panel: JPanel? = null
 
     //返回设置页面名称
@@ -68,7 +68,7 @@ class ChangeOverlayConfigurable : Configurable
         addRow(result, JBLabel("最大行数 / Maximum Line Count"), maximumLineCount, row++)
         addRow(result, showMinusPrefix, row++)
         addRow(result, JBLabel("开关差异预览快捷键 / Toggle Overlay Shortcut"), toggleShortcut, row++)
-        addRow(result, JBLabel("例如 ctrl alt O 留空表示不设置 / Example ctrl alt O leave empty to disable"), row++)
+        addRow(result, JBLabel("点击输入框后按下组合键 Backspace 清除 / Click the field and press keys Backspace to clear"), row++)
 
         val filler = GridBagConstraints()
         filler.gridx = 0
@@ -108,7 +108,7 @@ class ChangeOverlayConfigurable : Configurable
             maximumFileSize.text.toLongOrNull() != state.maximumFileSizeBytes ||
             maximumLineCount.text.toIntOrNull() != state.maximumLineCount ||
             showMinusPrefix.isSelected != state.showMinusPrefix ||
-            toggleShortcut.text.trim() != state.toggleShortcutKeystroke
+            toggleShortcut.keystrokeText() != state.toggleShortcutKeystroke
     }
 
     //应用用户设置
@@ -130,15 +130,11 @@ class ChangeOverlayConfigurable : Configurable
         state.maximumLineCount = maximumLineCount.text.toIntOrNull()?.coerceAtLeast(1) ?: 20_000
         state.showMinusPrefix = showMinusPrefix.isSelected
 
-        //快捷键文本非空但解析失败时保留旧值 快捷键写入Keymap后由Rider持久化
-        val shortcutText = toggleShortcut.text.trim()
-
-        if (shortcutText.isEmpty() || ToggleShortcutParser.parse(shortcutText) != null)
-        {
-            val previousShortcut = state.toggleShortcutKeystroke
-            state.toggleShortcutKeystroke = shortcutText
-            ToggleShortcutManager.apply(previousShortcut, shortcutText)
-        }
+        //捕获组件只产生合法快捷键 直接写回并同步到Keymap
+        val shortcutText = toggleShortcut.keystrokeText()
+        val previousShortcut = state.toggleShortcutKeystroke
+        state.toggleShortcutKeystroke = shortcutText
+        ToggleShortcutManager.apply(previousShortcut, shortcutText)
 
         //刷新全部打开项目应用设置
         for (project in ProjectManager.getInstance().openProjects)
@@ -168,7 +164,7 @@ class ChangeOverlayConfigurable : Configurable
         maximumFileSize.text = state.maximumFileSizeBytes.toString()
         maximumLineCount.text = state.maximumLineCount.toString()
         showMinusPrefix.isSelected = state.showMinusPrefix
-        toggleShortcut.text = state.toggleShortcutKeystroke
+        toggleShortcut.setKeyStroke(ToggleShortcutParser.parse(state.toggleShortcutKeystroke))
     }
 
     //后台加载当前项目本地分支
