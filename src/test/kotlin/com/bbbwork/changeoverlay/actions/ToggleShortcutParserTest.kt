@@ -37,8 +37,10 @@ class ToggleShortcutParserTest
 
         assertNotNull(keyStroke)
         assertEquals(KeyEvent.VK_O, keyStroke.keyCode)
+        //JDK解析结果同时包含旧版掩码和扩展掩码
         assertEquals(
-            InputEvent.CTRL_MASK or InputEvent.ALT_MASK,
+            InputEvent.CTRL_MASK or InputEvent.ALT_MASK or
+                InputEvent.CTRL_DOWN_MASK or InputEvent.ALT_DOWN_MASK,
             keyStroke.modifiers
         )
     }
@@ -51,7 +53,11 @@ class ToggleShortcutParserTest
 
         assertNotNull(keyStroke)
         assertEquals(KeyEvent.VK_F10, keyStroke.keyCode)
-        assertEquals(InputEvent.SHIFT_MASK, keyStroke.modifiers)
+        //JDK解析结果同时包含旧版掩码和扩展掩码
+        assertEquals(
+            InputEvent.SHIFT_MASK or InputEvent.SHIFT_DOWN_MASK,
+            keyStroke.modifiers
+        )
     }
 
     //测试非法文本返回null
