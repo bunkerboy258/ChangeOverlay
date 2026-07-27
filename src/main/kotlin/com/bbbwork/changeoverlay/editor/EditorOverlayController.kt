@@ -31,6 +31,7 @@ class EditorOverlayController(
 {
     private val logger = Logger.getInstance(EditorOverlayController::class.java)
     private val overlayState = EditorOverlayState()
+    private val resultCache = OverlayResultCache()
     private val version = AtomicLong()
     private var scheduledTask: Future<*>? = null
     private var lastReportedFailure: String? = null
@@ -80,6 +81,21 @@ class EditorOverlayController(
     {
         val taskVersion = version.incrementAndGet()
         scheduledTask?.cancel(false)
+
+        //缓存结果与当前文档一致时先立即渲染 不等后台重算
+        val cached = resultCache.current(editor.document.modificationStamp)
+
+        if (cached != null)
+        {
+            ApplicationManager.getApplication().invokeLater {
+                if (editor.isDisposed)
+                {
+                    return@invokeLater
+                }
+
+                render(cached)
+            }
+        }
 
         scheduledTask = AppExecutorUtil
             .getAppExecutorService()
@@ -142,6 +158,8 @@ class EditorOverlayController(
 
         lastReportedFailure = null
         val currentText = editor.document.text
+        //记录与当前文本一致的修改戳 供结果缓存校验
+        val currentStamp = editor.document.modificationStamp
         val result = diffEngine.diff(
             baseline.text,
             currentText
@@ -160,6 +178,9 @@ class EditorOverlayController(
             }
 
             render(mapping)
+
+            //渲染成功后写入缓存 供下次开启即时显示
+            resultCache.store(mapping, currentStamp)
         }
     }
 
@@ -284,5 +305,6 @@ class EditorOverlayController(
         version.incrementAndGet()
         scheduledTask?.cancel(true)
         overlayState.clear()
+        resultCache.invalidate()
     }
 }
