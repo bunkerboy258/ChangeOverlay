@@ -30,7 +30,8 @@ class ChangeOverlaySettings : PersistentStateComponent<ChangeOverlaySettings.Sta
         var debounceMilliseconds: Int = 300,
         var maximumFileSizeBytes: Long = 1_048_576,
         var maximumLineCount: Int = 20_000,
-        var showMinusPrefix: Boolean = true
+        var showMinusPrefix: Boolean = true,
+        var toggleShortcutKeystroke: String = ""
     )
 
     private var state = State()

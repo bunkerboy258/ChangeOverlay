@@ -1,5 +1,7 @@
 package com.bbbwork.changeoverlay.settings
 
+import com.bbbwork.changeoverlay.actions.ToggleShortcutManager
+import com.bbbwork.changeoverlay.actions.ToggleShortcutParser
 import com.bbbwork.changeoverlay.baseline.BaselineMode
 import com.bbbwork.changeoverlay.baseline.GitRepositoryStateReader
 import com.bbbwork.changeoverlay.services.ChangeOverlayProjectService
@@ -36,6 +38,7 @@ class ChangeOverlayConfigurable : Configurable
     private val maximumFileSize = JBTextField()
     private val maximumLineCount = JBTextField()
     private val showMinusPrefix = JBCheckBox("删除行显示减号前缀 / Show Minus Prefix")
+    private val toggleShortcut = JBTextField()
     private var panel: JPanel? = null
 
     //返回设置页面名称
@@ -64,6 +67,8 @@ class ChangeOverlayConfigurable : Configurable
         addRow(result, JBLabel("最大文件字节数 / Maximum File Size"), maximumFileSize, row++)
         addRow(result, JBLabel("最大行数 / Maximum Line Count"), maximumLineCount, row++)
         addRow(result, showMinusPrefix, row++)
+        addRow(result, JBLabel("开关差异预览快捷键 / Toggle Overlay Shortcut"), toggleShortcut, row++)
+        addRow(result, JBLabel("例如 ctrl alt O 留空表示不设置 / Example ctrl alt O leave empty to disable"), row++)
 
         val filler = GridBagConstraints()
         filler.gridx = 0
@@ -102,7 +107,8 @@ class ChangeOverlayConfigurable : Configurable
             debounce.text.toIntOrNull() != state.debounceMilliseconds ||
             maximumFileSize.text.toLongOrNull() != state.maximumFileSizeBytes ||
             maximumLineCount.text.toIntOrNull() != state.maximumLineCount ||
-            showMinusPrefix.isSelected != state.showMinusPrefix
+            showMinusPrefix.isSelected != state.showMinusPrefix ||
+            toggleShortcut.text.trim() != state.toggleShortcutKeystroke
     }
 
     //应用用户设置
@@ -123,6 +129,15 @@ class ChangeOverlayConfigurable : Configurable
         state.maximumFileSizeBytes = maximumFileSize.text.toLongOrNull()?.coerceAtLeast(1) ?: 1_048_576
         state.maximumLineCount = maximumLineCount.text.toIntOrNull()?.coerceAtLeast(1) ?: 20_000
         state.showMinusPrefix = showMinusPrefix.isSelected
+
+        //快捷键文本非空但解析失败时保留旧值
+        val shortcutText = toggleShortcut.text.trim()
+
+        if (shortcutText.isEmpty() || ToggleShortcutParser.parse(shortcutText) != null)
+        {
+            state.toggleShortcutKeystroke = shortcutText
+            ToggleShortcutManager.apply(shortcutText)
+        }
 
         //刷新全部打开项目应用设置
         for (project in ProjectManager.getInstance().openProjects)
@@ -152,6 +167,7 @@ class ChangeOverlayConfigurable : Configurable
         maximumFileSize.text = state.maximumFileSizeBytes.toString()
         maximumLineCount.text = state.maximumLineCount.toString()
         showMinusPrefix.isSelected = state.showMinusPrefix
+        toggleShortcut.text = state.toggleShortcutKeystroke
     }
 
     //后台加载当前项目本地分支
