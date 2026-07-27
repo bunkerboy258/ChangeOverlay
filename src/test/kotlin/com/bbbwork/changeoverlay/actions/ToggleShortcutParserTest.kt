@@ -1,5 +1,6 @@
 package com.bbbwork.changeoverlay.actions
 
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,7 +38,7 @@ class ToggleShortcutParserTest
         assertNotNull(keyStroke)
         assertEquals(KeyEvent.VK_O, keyStroke.keyCode)
         assertEquals(
-            KeyEvent.CTRL_DOWN_MASK or KeyEvent.ALT_DOWN_MASK,
+            InputEvent.CTRL_MASK or InputEvent.ALT_MASK,
             keyStroke.modifiers
         )
     }
@@ -50,7 +51,7 @@ class ToggleShortcutParserTest
 
         assertNotNull(keyStroke)
         assertEquals(KeyEvent.VK_F10, keyStroke.keyCode)
-        assertEquals(KeyEvent.SHIFT_DOWN_MASK, keyStroke.modifiers)
+        assertEquals(InputEvent.SHIFT_MASK, keyStroke.modifiers)
     }
 
     //测试非法文本返回null
