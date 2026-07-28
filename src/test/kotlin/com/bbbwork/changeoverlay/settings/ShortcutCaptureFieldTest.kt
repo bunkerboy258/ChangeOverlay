@@ -63,6 +63,44 @@ class ShortcutCaptureFieldTest
         assertEquals("", field.keystrokeText())
     }
 
+    //测试冲突时拒绝按键并保留旧值
+    @Test
+    fun rejectsConflictingKeyStroke()
+    {
+        val field = ShortcutCaptureField()
+        pressKey(
+            field,
+            KeyEvent.CTRL_DOWN_MASK,
+            KeyEvent.VK_D
+        )
+
+        field.conflictChecker = { "conflict hint" }
+        pressKey(
+            field,
+            KeyEvent.CTRL_DOWN_MASK,
+            KeyEvent.VK_S
+        )
+
+        assertEquals("ctrl pressed D", field.keystrokeText())
+        assertEquals("Ctrl+D", field.text)
+    }
+
+    //测试无冲突时正常接受
+    @Test
+    fun acceptsWhenCheckerPasses()
+    {
+        val field = ShortcutCaptureField()
+        field.conflictChecker = { null }
+        pressKey(
+            field,
+            KeyEvent.CTRL_DOWN_MASK,
+            KeyEvent.VK_S
+        )
+
+        assertEquals("ctrl pressed S", field.keystrokeText())
+        assertEquals("Ctrl+S", field.text)
+    }
+
     //测试回填已持久化快捷键
     @Test
     fun restoresStoredKeyStroke()
