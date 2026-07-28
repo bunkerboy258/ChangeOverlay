@@ -79,8 +79,17 @@ class EditorOverlayController(
     //立即在后台刷新
     fun refreshNow()
     {
+        val settings = ChangeOverlaySettings.getInstance().state
         val taskVersion = version.incrementAndGet()
         scheduledTask?.cancel(false)
+
+        //关闭状态下只清除显示 不渲染也不读基线
+        if (!settings.enabled)
+        {
+            clearOnEdt()
+
+            return
+        }
 
         //缓存结果与当前文档一致时先立即渲染 不等后台重算
         val cached = resultCache.current(editor.document.modificationStamp)
@@ -122,6 +131,15 @@ class EditorOverlayController(
     private fun computeRefresh(taskVersion: Long)
     {
         val settings = ChangeOverlaySettings.getInstance().state
+
+        //任务调度后用户可能已关闭 执行前再检查一次
+        if (!settings.enabled)
+        {
+            clearIfCurrent(taskVersion)
+
+            return
+        }
+
         val skipReason = EditorEligibilityChecker.check(editor, settings)
 
         if (skipReason != null)
