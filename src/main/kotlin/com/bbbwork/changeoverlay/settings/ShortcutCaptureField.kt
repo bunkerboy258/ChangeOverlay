@@ -12,6 +12,9 @@ class ShortcutCaptureField : JBTextField()
     //当前捕获的 KeyStroke 组合键
     private var capturedStroke: KeyStroke? = null
 
+    //冲突检测委托 返回冲突提示文本表示拒绝本次按键
+    var conflictChecker: ((KeyStroke) -> String?)? = null
+
     init
     {
         //输入框只读 内容完全由按键捕获产生
@@ -66,7 +69,19 @@ class ShortcutCaptureField : JBTextField()
         }
 
         //getKeyStrokeForEvent 直接生成 pressed 类型的 KeyStroke
-        setKeyStroke(KeyStroke.getKeyStrokeForEvent(event))
+        val candidate = KeyStroke.getKeyStrokeForEvent(event)
+        val conflict = conflictChecker?.invoke(candidate)
+
+        //检测到冲突时拒绝本次按键 保留原快捷键
+        if (conflict != null)
+        {
+            text = displayText(capturedStroke)
+            event.consume()
+
+            return
+        }
+
+        setKeyStroke(candidate)
         event.consume()
     }
 

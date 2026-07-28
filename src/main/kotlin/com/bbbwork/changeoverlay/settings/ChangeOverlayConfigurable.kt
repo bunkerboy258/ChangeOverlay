@@ -1,5 +1,6 @@
 package com.bbbwork.changeoverlay.settings
 
+import com.bbbwork.changeoverlay.actions.ToggleShortcutConflicts
 import com.bbbwork.changeoverlay.actions.ToggleShortcutManager
 import com.bbbwork.changeoverlay.actions.ToggleShortcutParser
 import com.bbbwork.changeoverlay.baseline.BaselineMode
@@ -9,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.ColorPanel
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
@@ -39,6 +41,7 @@ class ChangeOverlayConfigurable : Configurable
     private val maximumLineCount = JBTextField()
     private val showMinusPrefix = JBCheckBox("删除行显示减号前缀 / Show Minus Prefix")
     private val toggleShortcut = ShortcutCaptureField()
+    private val shortcutHint = JBLabel("点击输入框后按下组合键 Backspace 清除 / Click the field and press keys Backspace to clear")
     private var panel: JPanel? = null
 
     //返回设置页面名称
@@ -68,7 +71,7 @@ class ChangeOverlayConfigurable : Configurable
         addRow(result, JBLabel("最大行数 / Maximum Line Count"), maximumLineCount, row++)
         addRow(result, showMinusPrefix, row++)
         addRow(result, JBLabel("开关差异预览快捷键 / Toggle Overlay Shortcut"), toggleShortcut, row++)
-        addRow(result, JBLabel("点击输入框后按下组合键 Backspace 清除 / Click the field and press keys Backspace to clear"), row++)
+        addRow(result, shortcutHint, row++)
 
         val filler = GridBagConstraints()
         filler.gridx = 0
@@ -85,6 +88,27 @@ class ChangeOverlayConfigurable : Configurable
         }
         reset()
         loadLocalBranches()
+
+        //接线快捷键冲突检测 冲突时红字提示并拒绝本次按键
+        val defaultHintText = shortcutHint.text
+        val defaultHintForeground = shortcutHint.foreground
+        toggleShortcut.conflictChecker = { keyStroke ->
+            val conflict = ToggleShortcutConflicts.describe(keyStroke)
+
+            if (conflict != null)
+            {
+                shortcutHint.text = conflict
+                shortcutHint.foreground = JBColor.RED
+            }
+
+            if (conflict == null)
+            {
+                shortcutHint.text = defaultHintText
+                shortcutHint.foreground = defaultHintForeground
+            }
+
+            conflict
+        }
 
         return result
     }
