@@ -19,7 +19,7 @@ object ToggleShortcutConflicts
 
         //查询占用该快捷键的全部操作 排除Toggle自身
         val occupants = keymap
-            .getActionIds(KeyboardShortcut(keyStroke, null))
+            .getActionIdList(KeyboardShortcut(keyStroke, null))
             .filter {
                 it != TOGGLE_ACTION_ID
             }
