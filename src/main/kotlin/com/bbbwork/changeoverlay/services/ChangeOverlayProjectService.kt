@@ -116,14 +116,18 @@ class ChangeOverlayProjectService(
             }
         }
 
-        ChangeOverlaySettings.getInstance().state.baselineMode = BaselineMode.SESSION_SNAPSHOT
+        ChangeOverlaySettings.getInstance().updateState {
+            it.copy(baselineMode = BaselineMode.SESSION_SNAPSHOT)
+        }
         refreshAll()
     }
 
     //切回GitHead基线
     fun useGitHeadBaseline()
     {
-        ChangeOverlaySettings.getInstance().state.baselineMode = BaselineMode.GIT_HEAD
+        ChangeOverlaySettings.getInstance().updateState {
+            it.copy(baselineMode = BaselineMode.GIT_HEAD)
+        }
         refreshAll()
     }
 

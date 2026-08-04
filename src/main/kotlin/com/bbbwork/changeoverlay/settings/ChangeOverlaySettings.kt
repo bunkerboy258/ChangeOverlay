@@ -56,4 +56,17 @@ class ChangeOverlaySettings : PersistentStateComponent<ChangeOverlaySettings.Sta
     {
         this.state = state
     }
+
+    /**
+     * 替换插件设置状态以触发持久化检测
+     *
+     * @param transform 状态转换函数
+     * @return 更新后的状态
+     */
+    fun updateState(transform: (State) -> State): State
+    {
+        state = transform(state)
+
+        return state
+    }
 }

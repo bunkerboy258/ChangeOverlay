@@ -138,26 +138,29 @@ class ChangeOverlayConfigurable : Configurable
     //应用用户设置
     override fun apply()
     {
-        val state = ChangeOverlaySettings.getInstance().state
-        state.enabled = enabled.isSelected
-        state.baselineMode = baselineMode.selectedItem as BaselineMode
-        state.trackBranchCommitHistory = trackBranchCommitHistory.isSelected
-        state.trackedBranchName = selectedTrackedBranch()
-        state.showAddedLines = showAddedLines.isSelected
-        state.showDeletedLines = showDeletedLines.isSelected
-        state.showModifiedLines = showModifiedLines.isSelected
-        state.addedColorRgb = addedColor.selectedColor?.rgb ?: state.addedColorRgb
-        state.deletedColorRgb = deletedColor.selectedColor?.rgb ?: state.deletedColorRgb
-        state.backgroundOpacity = opacity.text.toIntOrNull()?.coerceIn(0, 100) ?: 55
-        state.debounceMilliseconds = debounce.text.toIntOrNull()?.coerceIn(0, 5000) ?: 300
-        state.maximumFileSizeBytes = maximumFileSize.text.toLongOrNull()?.coerceAtLeast(1) ?: 1_048_576
-        state.maximumLineCount = maximumLineCount.text.toIntOrNull()?.coerceAtLeast(1) ?: 20_000
-        state.showMinusPrefix = showMinusPrefix.isSelected
-
         //捕获组件只产生合法快捷键 直接写回并同步到Keymap
         val shortcutText = toggleShortcut.keystrokeText()
-        val previousShortcut = state.toggleShortcutKeystroke
-        state.toggleShortcutKeystroke = shortcutText
+        val settings = ChangeOverlaySettings.getInstance()
+        val previousShortcut = settings.state.toggleShortcutKeystroke
+        settings.updateState { state ->
+            state.copy(
+                enabled = enabled.isSelected,
+                baselineMode = baselineMode.selectedItem as BaselineMode,
+                trackBranchCommitHistory = trackBranchCommitHistory.isSelected,
+                trackedBranchName = selectedTrackedBranch(),
+                showAddedLines = showAddedLines.isSelected,
+                showDeletedLines = showDeletedLines.isSelected,
+                showModifiedLines = showModifiedLines.isSelected,
+                addedColorRgb = addedColor.selectedColor?.rgb ?: state.addedColorRgb,
+                deletedColorRgb = deletedColor.selectedColor?.rgb ?: state.deletedColorRgb,
+                backgroundOpacity = opacity.text.toIntOrNull()?.coerceIn(0, 100) ?: 55,
+                debounceMilliseconds = debounce.text.toIntOrNull()?.coerceIn(0, 5000) ?: 300,
+                maximumFileSizeBytes = maximumFileSize.text.toLongOrNull()?.coerceAtLeast(1) ?: 1_048_576,
+                maximumLineCount = maximumLineCount.text.toIntOrNull()?.coerceAtLeast(1) ?: 20_000,
+                showMinusPrefix = showMinusPrefix.isSelected,
+                toggleShortcutKeystroke = shortcutText
+            )
+        }
         ToggleShortcutManager.apply(previousShortcut, shortcutText)
 
         //刷新全部打开项目应用设置

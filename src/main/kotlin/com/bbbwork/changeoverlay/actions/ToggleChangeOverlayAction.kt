@@ -19,7 +19,9 @@ class ToggleChangeOverlayAction : ToggleAction()
         state: Boolean
     )
     {
-        ChangeOverlaySettings.getInstance().state.enabled = state
+        ChangeOverlaySettings.getInstance().updateState {
+            it.copy(enabled = state)
+        }
         val service = ChangeOverlayActionSupport.service(event)
 
         if (state)
