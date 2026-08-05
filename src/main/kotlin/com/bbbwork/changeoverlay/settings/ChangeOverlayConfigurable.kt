@@ -5,7 +5,7 @@ import com.bbbwork.changeoverlay.actions.ToggleShortcutManager
 import com.bbbwork.changeoverlay.actions.ToggleShortcutParser
 import com.bbbwork.changeoverlay.baseline.BaselineMode
 import com.bbbwork.changeoverlay.baseline.GitRepositoryStateReader
-import com.bbbwork.changeoverlay.services.ChangeOverlayProjectService
+import com.bbbwork.changeoverlay.services.ChangeOverlayToggleService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
@@ -144,7 +144,6 @@ class ChangeOverlayConfigurable : Configurable
         val previousShortcut = settings.state.toggleShortcutKeystroke
         settings.updateState { state ->
             state.copy(
-                enabled = enabled.isSelected,
                 baselineMode = baselineMode.selectedItem as BaselineMode,
                 trackBranchCommitHistory = trackBranchCommitHistory.isSelected,
                 trackedBranchName = selectedTrackedBranch(),
@@ -162,14 +161,7 @@ class ChangeOverlayConfigurable : Configurable
             )
         }
         ToggleShortcutManager.apply(previousShortcut, shortcutText)
-
-        //刷新全部打开项目应用设置
-        for (project in ProjectManager.getInstance().openProjects)
-        {
-            project
-                .getService(ChangeOverlayProjectService::class.java)
-                .refreshAll()
-        }
+        ChangeOverlayToggleService.getInstance().setEnabled(enabled.isSelected)
     }
 
     //恢复当前设置值
