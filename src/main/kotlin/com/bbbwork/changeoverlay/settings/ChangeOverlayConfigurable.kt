@@ -160,7 +160,7 @@ class ChangeOverlayConfigurable : Configurable
                 toggleShortcutKeystroke = shortcutText
             )
         }
-        ToggleShortcutManager.apply(previousShortcut, shortcutText)
+        ToggleShortcutManager.synchronize(previousShortcut, shortcutText)
         ChangeOverlayToggleService.getInstance().setEnabled(enabled.isSelected)
     }
 
