@@ -27,6 +27,7 @@ class ChangeOverlayProjectService(
 {
     private val snapshotProvider = SnapshotBaselineProvider()
     private val gitHeadProvider = GitHeadBaselineProvider(project)
+    private val toggleService = ChangeOverlayToggleService.getInstance()
     private val controllers = ConcurrentHashMap<Editor, EditorOverlayController>()
     private val editorFactoryListener = object : EditorFactoryListener
     {
@@ -147,7 +148,8 @@ class ChangeOverlayProjectService(
         val controller = EditorOverlayController(
             editor,
             ::baselineProvider,
-            MyersLineDiffEngine()
+            MyersLineDiffEngine(),
+            toggleService::isEnabled
         )
         controllers[editor] = controller
         Disposer.register(this, controller)

@@ -1,6 +1,5 @@
 package com.bbbwork.changeoverlay.services
 
-import com.bbbwork.changeoverlay.settings.ChangeOverlaySettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.ProjectManager
@@ -10,35 +9,27 @@ import com.intellij.openapi.project.ProjectManager
  */
 @Service(Service.Level.APP)
 class ChangeOverlayToggleService private constructor(
-    private val settingsProvider: () -> ChangeOverlaySettings,
     private val synchronizeProjects: (Boolean) -> Unit
 )
 {
-    constructor() : this(
-        settingsProvider = {
-            ChangeOverlaySettings.getInstance()
-        },
-        synchronizeProjects = ::synchronizeOpenProjects
-    )
+    @Volatile
+    private var enabled = true
+
+    constructor() : this(::synchronizeOpenProjects)
 
     companion object
     {
         /**
          * 创建可注入依赖的测试实例
          *
-         * @param settingsProvider	设置服务提供函数
          * @param synchronizeProjects	项目同步函数
          * @return 测试用应用级覆盖开关服务
          */
         internal fun createForTest(
-            settingsProvider: () -> ChangeOverlaySettings,
             synchronizeProjects: (Boolean) -> Unit
         ): ChangeOverlayToggleService
         {
-            return ChangeOverlayToggleService(
-                settingsProvider,
-                synchronizeProjects
-            )
+            return ChangeOverlayToggleService(synchronizeProjects)
         }
 
         /** @return 应用级覆盖开关服务 */
@@ -73,17 +64,21 @@ class ChangeOverlayToggleService private constructor(
         }
     }
 
+    /** @return 当前 Rider 会话是否启用覆盖显示 */
+    fun isEnabled(): Boolean
+    {
+        return enabled
+    }
+
     /**
-     * 更新应用级开关并同步全部已打开项目
+     * 更新当前 Rider 会话开关并同步全部已打开项目
      *
      * @param enabled 是否启用覆盖显示
      * @return 无
      */
     fun setEnabled(enabled: Boolean)
     {
-        settingsProvider().updateState {
-            it.copy(enabled = enabled)
-        }
+        this.enabled = enabled
         synchronizeProjects(enabled)
     }
 }

@@ -17,7 +17,6 @@ class ChangeOverlaySettings : PersistentStateComponent<ChangeOverlaySettings.Sta
 {
     //插件设置数据
     data class State(
-        var enabled: Boolean = true,
         var baselineMode: BaselineMode = BaselineMode.GIT_HEAD,
         var trackBranchCommitHistory: Boolean = false,
         var trackedBranchName: String = "",

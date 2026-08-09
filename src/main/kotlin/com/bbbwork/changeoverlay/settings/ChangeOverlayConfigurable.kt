@@ -117,8 +117,9 @@ class ChangeOverlayConfigurable : Configurable
     override fun isModified(): Boolean
     {
         val state = ChangeOverlaySettings.getInstance().state
+        val toggleService = ChangeOverlayToggleService.getInstance()
 
-        return enabled.isSelected != state.enabled ||
+        return enabled.isSelected != toggleService.isEnabled() ||
             baselineMode.selectedItem != state.baselineMode ||
             trackBranchCommitHistory.isSelected != state.trackBranchCommitHistory ||
             selectedTrackedBranch() != state.trackedBranchName ||
@@ -168,7 +169,7 @@ class ChangeOverlayConfigurable : Configurable
     override fun reset()
     {
         val state = ChangeOverlaySettings.getInstance().state
-        enabled.isSelected = state.enabled
+        enabled.isSelected = ChangeOverlayToggleService.getInstance().isEnabled()
         baselineMode.selectedItem = state.baselineMode
         trackBranchCommitHistory.isSelected = state.trackBranchCommitHistory
         selectTrackedBranch(state.trackedBranchName)

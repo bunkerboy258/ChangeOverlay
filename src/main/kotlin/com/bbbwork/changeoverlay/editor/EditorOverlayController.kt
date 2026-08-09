@@ -26,7 +26,8 @@ import java.util.concurrent.atomic.AtomicLong
 class EditorOverlayController(
     val editor: Editor,
     private val baselineProvider: () -> BaselineProvider,
-    private val diffEngine: LineDiffEngine
+    private val diffEngine: LineDiffEngine,
+    private val overlayEnabled: () -> Boolean
 ) : Disposable
 {
     private val logger = Logger.getInstance(EditorOverlayController::class.java)
@@ -58,7 +59,7 @@ class EditorOverlayController(
         val taskVersion = version.incrementAndGet()
         scheduledTask?.cancel(false)
 
-        if (!settings.enabled)
+        if (!overlayEnabled())
         {
             clearOnEdt()
 
@@ -84,7 +85,7 @@ class EditorOverlayController(
         scheduledTask?.cancel(false)
 
         //关闭状态下只清除显示 不渲染也不读基线
-        if (!settings.enabled)
+        if (!overlayEnabled())
         {
             clearOnEdt()
 
@@ -133,7 +134,7 @@ class EditorOverlayController(
         val settings = ChangeOverlaySettings.getInstance().state
 
         //任务调度后用户可能已关闭 执行前再检查一次
-        if (!settings.enabled)
+        if (!overlayEnabled())
         {
             clearIfCurrent(taskVersion)
 
