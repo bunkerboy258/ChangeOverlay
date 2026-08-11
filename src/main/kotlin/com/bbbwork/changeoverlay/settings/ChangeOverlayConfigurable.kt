@@ -5,7 +5,6 @@ import com.bbbwork.changeoverlay.actions.ToggleShortcutManager
 import com.bbbwork.changeoverlay.actions.ToggleShortcutParser
 import com.bbbwork.changeoverlay.baseline.BaselineMode
 import com.bbbwork.changeoverlay.baseline.GitRepositoryStateReader
-import com.bbbwork.changeoverlay.services.ChangeOverlayToggleService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.ProjectManager
@@ -26,7 +25,6 @@ import javax.swing.JPanel
 //插件设置页面
 class ChangeOverlayConfigurable : Configurable
 {
-    private val enabled = JBCheckBox("启用更改覆盖 / Enable Change Overlay")
     private val baselineMode = JComboBox(BaselineMode.entries.toTypedArray())
     private val trackBranchCommitHistory = JBCheckBox("跟踪分支提交历史 / Track Branch Commit History")
     private val trackedBranch = JComboBox<String>()
@@ -56,7 +54,6 @@ class ChangeOverlayConfigurable : Configurable
         val result = JPanel(GridBagLayout())
         var row = 0
 
-        addRow(result, enabled, row++)
         addRow(result, JBLabel("基线模式 / Baseline Mode"), baselineMode, row++)
         addRow(result, trackBranchCommitHistory, row++)
         addRow(result, JBLabel("跟踪分支 / Tracked Branch"), trackedBranch, row++)
@@ -117,10 +114,8 @@ class ChangeOverlayConfigurable : Configurable
     override fun isModified(): Boolean
     {
         val state = ChangeOverlaySettings.getInstance().state
-        val toggleService = ChangeOverlayToggleService.getInstance()
 
-        return enabled.isSelected != toggleService.isEnabled() ||
-            baselineMode.selectedItem != state.baselineMode ||
+        return baselineMode.selectedItem != state.baselineMode ||
             trackBranchCommitHistory.isSelected != state.trackBranchCommitHistory ||
             selectedTrackedBranch() != state.trackedBranchName ||
             showAddedLines.isSelected != state.showAddedLines ||
@@ -162,14 +157,12 @@ class ChangeOverlayConfigurable : Configurable
             )
         }
         ToggleShortcutManager.synchronize(previousShortcut, shortcutText)
-        ChangeOverlayToggleService.getInstance().setEnabled(enabled.isSelected)
     }
 
     //恢复当前设置值
     override fun reset()
     {
         val state = ChangeOverlaySettings.getInstance().state
-        enabled.isSelected = ChangeOverlayToggleService.getInstance().isEnabled()
         baselineMode.selectedItem = state.baselineMode
         trackBranchCommitHistory.isSelected = state.trackBranchCommitHistory
         selectTrackedBranch(state.trackedBranchName)
